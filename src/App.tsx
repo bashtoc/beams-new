@@ -15,6 +15,7 @@ import {
   useEffect,
 } from "react";
 import "./App.css";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useNameEnquiry } from "./hooks/useNameEnquiry";
 
 type PricingItem = {
@@ -3466,22 +3467,36 @@ function LoginPage({
 function DashboardPage({
   onNavigate,
 }: {
-  onNavigate: (
-    page:
-      | "home"
-      | "pricing"
-      | "about"
-      | "contact"
-      | "guide"
-      | "started"
-      | "business"
-      | "login"
-      | "dashboard"
-  ) => void;
+  onNavigate: (page: "home" | "pricing" | "about" | "contact" | "guide" | "started" | "business" | "login" | "dashboard") => void;
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Parse section from /dashboard/:section
+  const pathParts = location.pathname.replace(/^\//, "").split("/");
+  const sectionParam = pathParts[1] || "overview";
+
+  // Map URL paths to the original string names
+  const sectionMap: Record<string, string> = {
+    overview: "Overview",
+    wallet: "Wallet",
+    payments: "Payments",
+    "my-website": "My Website",
+    hosting: "Hosting & Maintenance",
+    settings: "Settings",
+    support: "Support"
+  };
+  
+  const activeDashboardSection = sectionMap[sectionParam] || "Overview";
+
+  const setActiveDashboardSection = (sectionName: string) => {
+    // Reverse map from string name to URL path
+    const entry = Object.entries(sectionMap).find(([, value]) => value === sectionName);
+    const path = entry ? entry[0] : "overview";
+    navigate(`/dashboard/${path}`);
+  };
+
   const searchQuery = "";
-  const [activeDashboardSection, setActiveDashboardSection] =
-    useState("Overview");
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinCode, setPinCode] = useState("");
   const [pinError, setPinError] = useState("");
@@ -6735,8 +6750,19 @@ function PrivacyPolicyPage() {
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<AppPage>(() => (localStorage.getItem("beams_auth_token") ? "dashboard" : "home"));
+  const location = useLocation();
+  const navigate = useNavigate();
   
+  // Calculate current page from URL
+  const path = location.pathname.replace(/^\//, "").split("/")[0] || (localStorage.getItem("beams_auth_token") ? "dashboard" : "home");
+  
+  const validPages = ["home", "pricing", "about", "contact", "guide", "started", "business", "login", "dashboard", "privacy"];
+  const currentPage = validPages.includes(path) ? (path as AppPage) : "home";
+
+  const setCurrentPage = (page: AppPage) => {
+    navigate(`/${page}`);
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentPage]);
