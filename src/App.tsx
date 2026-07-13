@@ -15,6 +15,7 @@ import {
   useEffect,
 } from "react";
 import "./App.css";
+import { useNameEnquiry } from "./hooks/useNameEnquiry";
 
 type PricingItem = {
   id: string;
@@ -159,9 +160,14 @@ type DashboardSettings = {
     sector: string;
     domain: string;
     isRegistered: boolean;
+    primaryColor?: string;
     logoUrl?: string | null;
     webhookUrl?: string;
     whitelistIps?: string;
+    withdrawalAccountNumber?: string | null;
+    withdrawalAccountName?: string | null;
+    withdrawalBankName?: string | null;
+    withdrawalBankCode?: string | null;
   } | null;
   virtualAccount: {
     accountNumber: string;
@@ -2228,6 +2234,10 @@ function BusinessInfoPage({
 
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!logoFile) {
+      setOtpError("Company logo is required. Please upload a logo.");
+      return;
+    }
     setSubmittingProfile(true);
     setOtpError("");
     try {
@@ -3061,6 +3071,9 @@ function BusinessInfoPage({
               </div>
             </div>
 
+            {otpError && (
+              <p className="text-xs font-bold text-rose-500 text-center">{otpError}</p>
+            )}
             <div className="flex justify-center pt-4">
               <button
                 type="submit"
@@ -3508,6 +3521,7 @@ function DashboardPage({
     "form"
   );
   const [bvnInput, setBvnInput] = useState("");
+  const [rcNumberInput, setRcNumberInput] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [identityId, setIdentityId] = useState("");
   const [accountOtp, setAccountOtp] = useState("");
@@ -3515,14 +3529,42 @@ function DashboardPage({
   const [accountLoading, setAccountLoading] = useState(false);
 
   const [isEditingCompany, setIsEditingCompany] = useState(false);
-  const [showProfileDetails, setShowProfileDetails] = useState(false);
+  const [isEditingWithdrawal, setIsEditingWithdrawal] = useState(false);
   const [editBusinessName, setEditBusinessName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editWebhookUrl, setEditWebhookUrl] = useState("");
   const [editWhitelistIps, setEditWhitelistIps] = useState("");
+  const [editWithdrawalAccountNumber, setEditWithdrawalAccountNumber] = useState("");
+  const [editWithdrawalAccountName, setEditWithdrawalAccountName] = useState("");
+  const [editWithdrawalBankCode, setEditWithdrawalBankCode] = useState("");
+  const [editWithdrawalBankName, setEditWithdrawalBankName] = useState("");
+  const [banksList, setBanksList] = useState<any[]>([]);
+  const [bankSearchTerm, setBankSearchTerm] = useState("");
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companySaveError, setCompanySaveError] = useState("");
   const [companySaveSuccess, setCompanySaveSuccess] = useState("");
+  const [showCompanySavePinModal, setShowCompanySavePinModal] = useState(false);
+  const [companySavePin, setCompanySavePin] = useState("");
+
+  const { accountName: fetchedAccountName, isLoading: isNameEnquiryLoading, error: nameEnquiryError } = useNameEnquiry(editWithdrawalBankCode, editWithdrawalAccountNumber);
+
+  useEffect(() => {
+    if (fetchedAccountName) {
+      setEditWithdrawalAccountName(fetchedAccountName);
+    }
+  }, [fetchedAccountName]);
+
+  const [walletBalance, setWalletBalance] = useState<string>("0");
+  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [withdrawOtpModalOpen, setWithdrawOtpModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawOtp, setWithdrawOtp] = useState("");
+  const [withdrawPin, setWithdrawPin] = useState("");
+  const [withdrawError, setWithdrawError] = useState("");
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   // Fetch settings when Dashboard mounts to verify PIN configuration status
   const fetchUserSettings = async () => {
@@ -3571,15 +3613,47 @@ function DashboardPage({
     setEditDescription(dashboardSettings.company?.description || "");
     setEditWebhookUrl(dashboardSettings.company?.webhookUrl || "");
     setEditWhitelistIps(dashboardSettings.company?.whitelistIps || "");
+    setEditWithdrawalAccountNumber(dashboardSettings.company?.withdrawalAccountNumber || "");
+    setEditWithdrawalAccountName(dashboardSettings.company?.withdrawalAccountName || "");
+    setEditWithdrawalBankCode(dashboardSettings.company?.withdrawalBankCode || "");
+    setEditWithdrawalBankName(dashboardSettings.company?.withdrawalBankName || "");
+    setBankSearchTerm(dashboardSettings.company?.withdrawalBankName || "");
     setCompanySaveError("");
     setCompanySaveSuccess("");
     setIsEditingCompany(true);
   };
 
-  const handleSaveCompany = async (e: React.FormEvent) => {
+  const startEditingWithdrawal = () => {
+    setEditBusinessName(dashboardSettings.company?.businessName || "");
+    setEditDescription(dashboardSettings.company?.description || "");
+    setEditWebhookUrl(dashboardSettings.company?.webhookUrl || "");
+    setEditWhitelistIps(dashboardSettings.company?.whitelistIps || "");
+    setEditWithdrawalAccountNumber(dashboardSettings.company?.withdrawalAccountNumber || "");
+    setEditWithdrawalAccountName(dashboardSettings.company?.withdrawalAccountName || "");
+    setEditWithdrawalBankCode(dashboardSettings.company?.withdrawalBankCode || "");
+    setEditWithdrawalBankName(dashboardSettings.company?.withdrawalBankName || "");
+    setBankSearchTerm(dashboardSettings.company?.withdrawalBankName || "");
+    setCompanySaveError("");
+    setCompanySaveSuccess("");
+    setIsEditingWithdrawal(true);
+  };
+
+  const handleSaveCompany = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editBusinessName.trim()) {
       setCompanySaveError("Business name is required.");
+      return;
+    }
+
+    setCompanySaveError("");
+    setCompanySavePin("");
+    setShowCompanySavePinModal(true);
+  };
+
+  const confirmSaveCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{4}$/.test(companySavePin)) {
+      setCompanySaveError("Passcode must be exactly 4 digits.");
       return;
     }
 
@@ -3600,6 +3674,11 @@ function DashboardPage({
           description: editDescription.trim(),
           webhookUrl: editWebhookUrl.trim(),
           whitelistIps: editWhitelistIps.trim(),
+          withdrawalAccountNumber: editWithdrawalAccountNumber.trim(),
+          withdrawalAccountName: editWithdrawalAccountName.trim(),
+          withdrawalBankCode: editWithdrawalBankCode.trim(),
+          withdrawalBankName: editWithdrawalBankName.trim(),
+          pin: companySavePin,
         }),
       });
 
@@ -3608,23 +3687,39 @@ function DashboardPage({
         throw new Error(data.message || "Failed to update company details.");
       }
 
-      setCompanySaveSuccess("Company details updated successfully.");
+      setCompanySaveSuccess("Details updated successfully.");
       setDashboardSettings((current) => ({
         ...current,
         company: data.company,
       }));
       setIsEditingCompany(false);
+      setIsEditingWithdrawal(false);
+      setShowCompanySavePinModal(false);
     } catch (err) {
       setCompanySaveError(
         err instanceof Error ? err.message : "Unable to update company details."
       );
     } finally {
       setIsSavingCompany(false);
+      setCompanySavePin("");
+    }
+  };
+
+  const fetchBanks = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/banks`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBanksList(data.banks || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch banks", err);
     }
   };
 
   useEffect(() => {
     fetchUserSettings();
+    fetchBanks();
   }, [onNavigate]);
 
   const handleVerifyBvn = async () => {
@@ -3674,18 +3769,24 @@ function DashboardPage({
     setAccountError("");
     try {
       const token = localStorage.getItem("beams_auth_token");
+      const payload: any = {
+        bvn: bvnInput.trim(),
+        phoneNumber: phoneInput.trim(),
+        identityId,
+        otp: accountOtp.trim(),
+      };
+      
+      if (dashboardSettings?.company?.isRegistered) {
+        payload.companyRegistrationNumber = rcNumberInput.trim();
+      }
+
       const res = await fetch(`${API_BASE_URL}/user/create-subaccount`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          bvn: bvnInput.trim(),
-          phoneNumber: phoneInput.trim(),
-          identityId,
-          otp: accountOtp.trim(),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -3703,6 +3804,25 @@ function DashboardPage({
       setAccountError("Server connection failed. Please try again.");
     } finally {
       setAccountLoading(false);
+    }
+  };
+  const fetchWalletDetails = async () => {
+    setIsWalletLoading(true);
+    try {
+      const token = localStorage.getItem("beams_auth_token");
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/dashboard/wallet`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWalletBalance(data.balance || "0");
+        setWalletTransactions(data.transactions || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch wallet details:", error);
+    } finally {
+      setIsWalletLoading(false);
     }
   };
 
@@ -3751,7 +3871,71 @@ function DashboardPage({
     };
 
     fetchOverview();
+    fetchWalletDetails();
   }, []);
+
+  const handleWithdrawalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!withdrawAmount || Number(withdrawAmount) <= 0) {
+      setWithdrawError("Please enter a valid amount");
+      return;
+    }
+    setWithdrawLoading(true);
+    setWithdrawError("");
+
+    try {
+      const token = localStorage.getItem("beams_auth_token");
+      if (!withdrawOtpModalOpen) {
+        // Step 1: Request OTP
+        const res = await fetch(`${API_BASE_URL}/dashboard/wallet/send-otp`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setWithdrawOtpModalOpen(true);
+          setWithdrawError("");
+        } else {
+          setWithdrawError(data.message || "Failed to send OTP");
+        }
+      } else {
+        // Step 2: Submit withdrawal
+        if (!withdrawOtp || !withdrawPin) {
+          setWithdrawError("Please enter OTP and Passcode");
+          setWithdrawLoading(false);
+          return;
+        }
+        const res = await fetch(`${API_BASE_URL}/dashboard/wallet/withdraw`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({
+            amount: withdrawAmount,
+            otp: withdrawOtp,
+            pin: withdrawPin
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Reset and close
+          setWithdrawModalOpen(false);
+          setWithdrawOtpModalOpen(false);
+          setWithdrawAmount("");
+          setWithdrawOtp("");
+          setWithdrawPin("");
+          fetchWalletDetails(); // Refresh balance
+        } else {
+          setWithdrawError(data.message || "Withdrawal failed");
+        }
+      }
+    } catch (err: any) {
+      setWithdrawError(err.message || "Something went wrong.");
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
 
   const handleSetPin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -3992,8 +4176,9 @@ function DashboardPage({
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const mainMenuItems = [
-    "My Website",
+    "Wallet",
     "Payments",
+    "My Website",
     "Hosting & Maintenance",
     "Settings",
     "Support",
@@ -4019,6 +4204,23 @@ function DashboardPage({
     : websiteRawStatus === "expired"
     ? "Expired"
     : "Offline";
+
+  const normalizeForSearch = (str: string) => (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const searchTarget = normalizeForSearch(bankSearchTerm);
+  const filteredBanks = bankSearchTerm.trim() === "" ? banksList : banksList.map(bank => {
+    const normName = normalizeForSearch(bank.name);
+    const normAliases = (bank.aliases || []).map((a: string) => normalizeForSearch(a));
+    
+    let score = 0;
+    if (normName === searchTarget) score = 100;
+    else if (normAliases.includes(searchTarget)) score = 90;
+    else if (normName.startsWith(searchTarget)) score = 80;
+    else if (normAliases.some((a: string) => a.startsWith(searchTarget))) score = 70;
+    else if (normName.includes(searchTarget)) score = 60;
+    else if (normAliases.some((a: string) => a.includes(searchTarget))) score = 50;
+    
+    return { ...bank, score };
+  }).filter(b => b.score > 0).sort((a, b) => b.score - a.score);
 
   return (
     <div className="min-h-screen flex bg-[#F9FAFB] text-[#0C0C0C] font-sans antialiased">
@@ -4266,6 +4468,21 @@ function DashboardPage({
                           />
                         </svg>
                       )}
+                      {item === "Wallet" && (
+                        <svg
+                          className="h-4 w-4 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                          />
+                        </svg>
+                      )}
                       {item === "Settings" && (
                         <svg
                           className="h-4 w-4 shrink-0"
@@ -4368,8 +4585,8 @@ function DashboardPage({
             {/* User Profile Info */}
             <div className="flex items-center gap-3 cursor-pointer group">
               <img
-                src="/heroimageb.png"
-                alt="User avatar"
+                src={dashboardSettings?.company?.logoUrl || "/heroimageb.png"}
+                alt="Company logo"
                 className="h-9 w-9 rounded-full object-cover border border-slate-200"
               />
               <div className="text-left hidden sm:block">
@@ -4834,6 +5051,8 @@ function DashboardPage({
             </>
           )}
 
+
+
           {activeDashboardSection === "Hosting & Maintenance" && (
             <div className="grid gap-6 md:grid-cols-2 animate-fade-in">
               {/* Website Status Card */}
@@ -5152,41 +5371,294 @@ function DashboardPage({
             </>
           )}
 
+          {activeDashboardSection === "Wallet" && (
+            <div className="max-w-2xl flex flex-col gap-8">
+                <div className="rounded-[32px] bg-[#27272A] p-8 text-white shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+                  <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
+                    <div>
+                      <p className="text-sm font-medium text-white/60 uppercase tracking-wider mb-2">Available Balance</p>
+                      <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                        ₦ {Number(walletBalance).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </h2>
+                    </div>
+                    <div className="mt-8 flex gap-4">
+                      <button 
+                        onClick={() => {
+                          if (!dashboardSettings?.company?.withdrawalAccountNumber) {
+                            alert("Please configure your withdrawal bank account in Settings first.");
+                            setActiveDashboardSection("Settings");
+                            return;
+                          }
+                          setWithdrawModalOpen(true);
+                        }}
+                        className="rounded-xl bg-white text-[#27272A] px-6 py-3 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                      >
+                        Withdraw
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="rounded-[32px] bg-white p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.03)] flex flex-col h-full min-h-[300px]">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C] mb-6">
+                    Recent Transactions
+                  </h3>
+                  {isWalletLoading ? (
+                    <div className="flex items-center justify-center flex-1">
+                      <svg className="h-8 w-8 animate-spin text-slate-300" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </div>
+                  ) : walletTransactions.length === 0 ? (
+                    <div className="flex items-center justify-center flex-1 flex-col opacity-50">
+                      <svg className="w-12 h-12 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-sm font-medium text-slate-500">No transactions yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {walletTransactions.map((tx: any, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tx.type === "credit" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
+                              {tx.type === "credit" ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#0C0C0C]">{tx.description || (tx.type === "credit" ? "Deposit" : "Withdrawal")}</p>
+                              <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                                {new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-sm font-bold ${tx.type === "credit" ? "text-green-600" : "text-red-600"}`}>
+                              {tx.type === "credit" ? "+" : "-"} ₦{Number(tx.amount).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1 inline-block">
+                              {tx.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              
+              <div className="flex flex-col gap-6">
+                <div className="rounded-[32px] bg-white p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.03)]">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C] mb-6">
+                    Withdrawal Settings
+                  </h3>
+                  <div className="rounded-2xl border-2 border-slate-100 p-5 bg-slate-50">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Saved Account</p>
+                    {dashboardSettings?.company?.withdrawalAccountNumber ? (
+                      <div>
+                        <p className="text-base font-bold text-[#0C0C0C] tracking-wide mb-0.5">
+                          {dashboardSettings.company.withdrawalAccountNumber}
+                        </p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {dashboardSettings.company.withdrawalBankName || "Bank Account"}
+                        </p>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#27272A] mt-2 bg-[#27272A]/10 inline-block px-2 py-1 rounded-md">
+                          {dashboardSettings.company.withdrawalAccountName}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm font-medium text-slate-500">No account configured</p>
+                        <button 
+                          onClick={() => setActiveDashboardSection("Settings")}
+                          className="mt-3 text-xs font-bold text-[#27272A] hover:underline"
+                        >
+                          Configure in Settings
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-1 text-[10px] font-medium text-slate-400">
+                    <span>
+                      Withdrawals are processed instantly via Safehaven Microfinance Bank.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wallet Withdrawal Modal */}
+          {withdrawModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="w-full max-w-sm rounded-[32px] bg-white p-8 shadow-2xl animate-fade-in-up">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#27272A] text-white">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0C0C0C]">Withdraw Funds</h3>
+                      <p className="text-xs text-slate-500">
+                        {withdrawOtpModalOpen ? "Authenticate to confirm" : "Enter withdrawal amount"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setWithdrawModalOpen(false);
+                      setWithdrawOtpModalOpen(false);
+                      setWithdrawError("");
+                    }}
+                    className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleWithdrawalSubmit} className="space-y-5">
+                  {!withdrawOtpModalOpen ? (
+                    <div>
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Amount (NGN)
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        step="0.01"
+                        required
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-base font-bold text-[#0C0C0C] outline-none focus:border-[#27272A] focus:bg-white transition-all placeholder:font-medium placeholder:text-slate-400"
+                        placeholder="e.g. 5000"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Email OTP
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={withdrawOtp}
+                          onChange={(e) => setWithdrawOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-center text-xl font-bold tracking-[0.25em] text-[#0C0C0C] outline-none focus:border-[#27272A] focus:bg-white transition-all placeholder:font-medium placeholder:text-slate-400 placeholder:tracking-normal"
+                          placeholder="000000"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Passcode
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={withdrawPin}
+                          onChange={(e) => setWithdrawPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                          className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-center text-xl font-bold tracking-[0.5em] text-[#0C0C0C] outline-none focus:border-[#27272A] focus:bg-white transition-all placeholder:font-medium placeholder:text-slate-400 placeholder:tracking-normal"
+                          placeholder="••••"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {withdrawError && (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-red-600 text-sm font-medium">
+                      <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {withdrawError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={withdrawLoading}
+                    className="w-full rounded-2xl bg-[#27272A] p-4 text-sm font-bold text-white transition-all hover:bg-black disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {withdrawLoading ? (
+                      <svg className="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      withdrawOtpModalOpen ? "Confirm Withdrawal" : "Continue"
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
           {activeDashboardSection === "Settings" && (
             <>
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                        User Details
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                        Profile information attached to this Beams business
-                        dashboard.
-                      </p>
+                <div className="flex flex-col gap-6">
+                  {/* User Details Container */}
+                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                          User Details
+                        </h3>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                          Profile information attached to this Beams business dashboard.
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowProfileDetails((shown) => !shown)}
-                        aria-expanded={showProfileDetails}
-                        className="rounded-xl bg-[#0C0C0C] px-3 py-1.5 text-[10px] font-black uppercase text-white transition hover:bg-[#1C1C1C] cursor-pointer"
-                      >
-                        {showProfileDetails ? "Hide details" : "Profile details"}
-                      </button>
-                      {dashboardSettings.company && (
-                        <button
-                          onClick={startEditingCompany}
-                          className="rounded-xl border border-slate-200 px-3 py-1.5 text-[10px] font-black uppercase text-[#0C0C0C] hover:bg-slate-50 transition cursor-pointer"
-                        >
-                          Edit Company
-                        </button>
-                      )}
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Full name</span>
+                        <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.fullName}</span>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email address</span>
+                        <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.email || "Not available"}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {isEditingCompany ? (
+                  {/* Company Details Container */}
+                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                          Company Profile
+                        </h3>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                          Business details and settings for your company.
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        {dashboardSettings.company && !isEditingCompany && (
+                          <button
+                            onClick={startEditingCompany}
+                            className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
+                          >
+                            Edit Company
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingCompany ? (
+                      <>
                     <form onSubmit={handleSaveCompany} className="mt-6 space-y-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -5243,6 +5715,8 @@ function DashboardPage({
                         </p>
                       </div>
 
+
+
                       {companySaveError && (
                         <p className="text-xs font-bold text-rose-500">
                           {companySaveError}
@@ -5273,14 +5747,12 @@ function DashboardPage({
                         </button>
                       </div>
                     </form>
-                  ) : showProfileDetails ? (
+                    
+
+                    </>
+                  ) : (
                     <div className="mt-6 grid gap-4 sm:grid-cols-2">
                       {[
-                        ["Full name", dashboardSettings.fullName],
-                        [
-                          "Email address",
-                          dashboardSettings.email || "Not available",
-                        ],
                         [
                           "Business name",
                           dashboardSettings.company?.businessName ||
@@ -5308,6 +5780,14 @@ function DashboardPage({
                           "Whitelist IPs",
                           dashboardSettings.company?.whitelistIps || "Not configured",
                         ],
+                        [
+                          "Brand Color",
+                          dashboardSettings.company?.primaryColor || "Not configured",
+                        ],
+                        [
+                          "Company Logo",
+                          dashboardSettings.company?.logoUrl || "Not configured",
+                        ],
                       ].map(([label, value]) => (
                         <div
                           key={label}
@@ -5316,8 +5796,15 @@ function DashboardPage({
                           <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             {label}
                           </span>
-                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">
-                            {value}
+                          <span className="mt-1 flex items-center gap-2 text-sm font-bold text-[#0C0C0C]">
+                            {label === "Brand Color" && value !== "Not configured" && (
+                              <div className="w-4 h-4 rounded-full border border-slate-200 shadow-sm" style={{ backgroundColor: value as string }} />
+                            )}
+                            {label === "Company Logo" && value !== "Not configured" ? (
+                              <img src={value as string} alt="Company Logo" className="h-6 w-auto max-w-[120px] object-contain rounded" />
+                            ) : (
+                              value
+                            )}
                           </span>
                         </div>
                       ))}
@@ -5330,7 +5817,221 @@ function DashboardPage({
                         </span>
                       </div>
                     </div>
-                  ) : null}
+                  )}
+                  </div>
+
+                  {/* Withdrawal Details Container */}
+                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                          Withdrawal Details
+                        </h3>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                          Bank account used to receive funds from Beams.
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        {dashboardSettings.company && !isEditingWithdrawal && (
+                          <button
+                            onClick={startEditingWithdrawal}
+                            className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
+                          >
+                            Edit Details
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingWithdrawal ? (
+                      <form onSubmit={handleSaveCompany} className="mt-6 space-y-4">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                              Bank Name
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={bankSearchTerm}
+                                onFocus={() => setShowBankDropdown(true)}
+                                onChange={(e) => {
+                                  setBankSearchTerm(e.target.value);
+                                  setShowBankDropdown(true);
+                                  if (e.target.value !== editWithdrawalBankName) {
+                                    setEditWithdrawalBankCode("");
+                                    setEditWithdrawalBankName("");
+                                  }
+                                }}
+                                placeholder="Search for your bank..."
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition capitalize"
+                              />
+                              {showBankDropdown && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-10" 
+                                    onClick={() => setShowBankDropdown(false)} 
+                                  />
+                                  <div className="absolute z-20 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto">
+                                    {filteredBanks.map((bank: any) => (
+                                        <div
+                                          key={bank.bankCode}
+                                          className="px-4 py-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-[#0C0C0C] cursor-pointer capitalize transition border-b border-slate-50 last:border-0"
+                                          onClick={() => {
+                                            setEditWithdrawalBankCode(bank.bankCode);
+                                            setEditWithdrawalBankName(bank.name);
+                                            setBankSearchTerm(bank.name);
+                                            setShowBankDropdown(false);
+                                          }}
+                                        >
+                                          {bank.name}
+                                        </div>
+                                      ))}
+                                      {filteredBanks.length === 0 && (
+                                        <div className="px-4 py-3 text-xs font-medium text-slate-500 text-center">
+                                          No matching banks found.
+                                        </div>
+                                      )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                              Account Number
+                            </label>
+                            <input
+                              type="text"
+                              value={editWithdrawalAccountNumber}
+                              onChange={(e) => setEditWithdrawalAccountNumber(e.target.value)}
+                              placeholder="10-digit account number"
+                              maxLength={10}
+                              className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
+                            />
+                          </div>
+                          <div>
+                            <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                              <span>Account Name</span>
+                              {isNameEnquiryLoading && <span className="text-emerald-500 animate-pulse">Verifying...</span>}
+                              {nameEnquiryError && <span className="text-rose-500">{nameEnquiryError}</span>}
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={editWithdrawalAccountName}
+                                onChange={(e) => setEditWithdrawalAccountName(e.target.value)}
+                                placeholder={isNameEnquiryLoading ? "Fetching account name..." : "Account name will appear here"}
+                                readOnly
+                                className={`w-full rounded-xl bg-slate-50 pl-4 pr-10 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition cursor-not-allowed ${isNameEnquiryLoading ? 'opacity-50' : 'opacity-80'}`}
+                              />
+                              {!isNameEnquiryLoading && !nameEnquiryError && editWithdrawalAccountName && (
+                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                  <svg className="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
+                                    <title>Account Verified</title>
+                                    <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {companySaveError && (
+                          <p className="text-xs font-bold text-rose-500 mt-4">
+                            {companySaveError}
+                          </p>
+                        )}
+
+                        {companySaveSuccess && (
+                          <p className="text-xs font-bold text-emerald-600 mt-4">
+                            {companySaveSuccess}
+                          </p>
+                        )}
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            type="submit"
+                            disabled={isSavingCompany}
+                            className="flex-1 py-3 rounded-xl bg-[#0C0C0C] text-[10px] font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"
+                          >
+                            {isSavingCompany ? "Saving..." : "Save Details"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingWithdrawal(false)}
+                            disabled={isSavingCompany}
+                            className="flex-1 py-3 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Bank Name</span>
+                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C] capitalize">{dashboardSettings.company?.withdrawalBankName || "Not configured"}</span>
+                        </div>
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Number</span>
+                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountNumber || "Not configured"}</span>
+                        </div>
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:col-span-2">
+                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Name</span>
+                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountName || "Not configured"}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Passcode Modal for Settings Save */}
+                  {showCompanySavePinModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+                      <div className="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl relative overflow-hidden">
+                        <button
+                          onClick={() => setShowCompanySavePinModal(false)}
+                          className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition"
+                        >
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        
+                        <h3 className="text-xl font-black text-[#0C0C0C] mb-2">Verify Changes</h3>
+                        <p className="text-sm text-slate-500 mb-6">Enter your 4-digit transaction PIN to save these details.</p>
+
+                        {companySaveError && (
+                          <div className="mb-6 p-4 rounded-xl bg-rose-50 text-rose-600 text-sm font-medium border border-rose-100">
+                            {companySaveError}
+                          </div>
+                        )}
+
+                        <form onSubmit={confirmSaveCompany} className="space-y-6">
+                          <div>
+                            <input
+                              type="password"
+                              value={companySavePin}
+                              onChange={(e) => setCompanySavePin(e.target.value.replace(/\D/g, ''))}
+                              className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-slate-300 focus:bg-white transition-all outline-none font-black tracking-[0.3em] text-center text-lg placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400"
+                              placeholder="••••"
+                              maxLength={4}
+                              required
+                              autoFocus
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isSavingCompany || companySavePin.length !== 4}
+                            className="w-full py-4 rounded-full bg-[#0C0C0C] text-sm font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+                          >
+                            {isSavingCompany ? "Verifying..." : "Confirm Save"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
@@ -5431,6 +6132,24 @@ function DashboardPage({
                                   className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
                                 />
                               </div>
+
+                              {dashboardSettings?.company?.isRegistered && (
+                                <div>
+                                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
+                                    Company Registration Number (RC/BN)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={rcNumberInput}
+                                    onChange={(e) =>
+                                      setRcNumberInput(e.target.value)
+                                    }
+                                    className="w-full rounded-xl bg-[#0C0C0C] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                                    placeholder="Enter RC or BN Number"
+                                  />
+                                </div>
+                              )}
+
                               <div>
                                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                                   Phone Number
@@ -5688,6 +6407,7 @@ function DashboardPage({
             "My Website",
             "Payments",
             "Hosting & Maintenance",
+            "Wallet",
             "Support",
             "Settings",
           ].includes(activeDashboardSection) && (
