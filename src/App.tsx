@@ -5627,7 +5627,7 @@ function DashboardPage({
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Left Sidebar Navigation */}
                 <div className="w-full md:w-64 shrink-0">
-                  <div className="rounded-[24px] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.03)] overflow-hidden">
+                  <div className="bg-white overflow-hidden">
                     {([
                       { key: "user_details", label: "User Details", icon: (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
@@ -5648,13 +5648,13 @@ function DashboardPage({
                       <button
                         key={tab.key}
                         onClick={() => setSettingsActiveTab(tab.key)}
-                        className={`w-full flex items-center gap-3 px-5 py-4 text-left text-xs font-bold uppercase tracking-wider transition-all duration-200 border-l-[3px] ${
+                        className={`w-full flex items-center gap-3 px-5 py-4 text-left text-sm font-bold transition-all duration-200 ${
                           settingsActiveTab === tab.key
-                            ? "bg-slate-50 text-[#0C0C0C] border-[#0C0C0C]"
-                            : "text-slate-400 border-transparent hover:bg-slate-50/60 hover:text-slate-600"
+                            ? "bg-black text-white"
+                            : "text-slate-400 hover:bg-slate-50/60 hover:text-slate-600"
                         }`}
                       >
-                        <span className={settingsActiveTab === tab.key ? "text-[#0C0C0C]" : "text-slate-400"}>{tab.icon}</span>
+                        <span className={settingsActiveTab === tab.key ? "text-white" : "text-slate-400"}>{tab.icon}</span>
                         {tab.label}
                       </button>
                     ))}
@@ -6068,7 +6068,7 @@ function DashboardPage({
                                         type="text"
                                         value={rcNumberInput}
                                         onChange={(e) => setRcNumberInput(e.target.value)}
-                                        className="w-full rounded-xl bg-[#0C0C0C] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                                        className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder:text-xs placeholder:text-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
                                         placeholder="Enter RC or BN Number"
                                       />
                                     </div>
