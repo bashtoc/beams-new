@@ -3530,6 +3530,7 @@ function DashboardPage({
   const [settingsPasscodeSuccess, setSettingsPasscodeSuccess] = useState("");
   const [isUpdatingPasscode, setIsUpdatingPasscode] = useState(false);
   const [showSettingsPasscodeForm, setShowSettingsPasscodeForm] = useState(false);
+  const [settingsActiveTab, setSettingsActiveTab] = useState<"user_details" | "company_profile" | "withdrawal_details" | "virtual_account" | "passcode_update">("user_details");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [accountStep, setAccountStep] = useState<"form" | "otp" | "processing">(
@@ -5621,274 +5622,263 @@ function DashboardPage({
             </div>
           )}
 
-          {activeDashboardSection === "Settings" && (
+                    {activeDashboardSection === "Settings" && (
             <>
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="flex flex-col gap-6">
-                  {/* User Details Container */}
-                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                          User Details
-                        </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                          Profile information attached to this Beams business dashboard.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Full name</span>
-                        <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.fullName}</span>
-                      </div>
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email address</span>
-                        <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.email || "Not available"}</span>
-                      </div>
-                    </div>
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left Sidebar Navigation */}
+                <div className="w-full md:w-64 shrink-0">
+                  <div className="rounded-[24px] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.03)] overflow-hidden">
+                    {([
+                      { key: "user_details", label: "User Details", icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                      )},
+                      { key: "company_profile", label: "Company Profile", icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21" /></svg>
+                      )},
+                      { key: "withdrawal_details", label: "Withdrawal Details", icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>
+                      )},
+                      { key: "virtual_account", label: "Virtual Account", icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
+                      )},
+                      { key: "passcode_update", label: "Passcode Update", icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                      )},
+                    ] as const).map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setSettingsActiveTab(tab.key)}
+                        className={`w-full flex items-center gap-3 px-5 py-4 text-left text-xs font-bold uppercase tracking-wider transition-all duration-200 border-l-[3px] ${
+                          settingsActiveTab === tab.key
+                            ? "bg-slate-50 text-[#0C0C0C] border-[#0C0C0C]"
+                            : "text-slate-400 border-transparent hover:bg-slate-50/60 hover:text-slate-600"
+                        }`}
+                      >
+                        <span className={settingsActiveTab === tab.key ? "text-[#0C0C0C]" : "text-slate-400"}>{tab.icon}</span>
+                        {tab.label}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Company Details Container */}
-                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                          Company Profile
-                        </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                          Business details and settings for your company.
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-2">
-                        {dashboardSettings.company && !isEditingCompany && (
-                          <button
-                            onClick={startEditingCompany}
-                            className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
-                          >
-                            Edit Company
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {isEditingCompany ? (
-                      <>
-                    <form onSubmit={handleSaveCompany} className="mt-6 space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          Company Name
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={editBusinessName}
-                          onChange={(e) => setEditBusinessName(e.target.value)}
-                          className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          Company Description
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={editDescription}
-                          onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="Describe your company services or product offerings..."
-                          className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          Webhook URL
-                        </label>
-                        <input
-                          type="url"
-                          value={editWebhookUrl}
-                          onChange={(e) => setEditWebhookUrl(e.target.value)}
-                          placeholder="https://yourdomain.com/webhook"
-                          className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          Whitelist IP Addresses
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={editWhitelistIps}
-                          onChange={(e) => setEditWhitelistIps(e.target.value)}
-                          placeholder="192.168.1.1, 10.0.0.1"
-                          className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition resize-none"
-                        />
-                        <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
-                          Comma-separated IPs allowed for API access.
-                        </p>
-                      </div>
-
-
-
-                      {companySaveError && (
-                        <p className="text-xs font-bold text-rose-500">
-                          {companySaveError}
-                        </p>
-                      )}
-
-                      {companySaveSuccess && (
-                        <p className="text-xs font-bold text-emerald-600">
-                          {companySaveSuccess}
-                        </p>
-                      )}
-
-                      <div className="flex gap-3 pt-2">
-                        <button
-                          type="submit"
-                          disabled={isSavingCompany}
-                          className="flex-1 py-3 rounded-xl bg-[#0C0C0C] text-[10px] font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"
-                        >
-                          {isSavingCompany ? "Saving..." : "Save Changes"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingCompany(false)}
-                          disabled={isSavingCompany}
-                          className="flex-1 py-3 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                    
-
-                    </>
-                  ) : (
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                      {[
-                        [
-                          "Business name",
-                          dashboardSettings.company?.businessName ||
-                            "Not configured",
-                        ],
-                        [
-                          "Business sector",
-                          dashboardSettings.company?.sector || "Not configured",
-                        ],
-                        [
-                          "Website domain",
-                          dashboardSettings.company?.domain || "Not configured",
-                        ],
-                        [
-                          "Registration",
-                          dashboardSettings.company?.isRegistered
-                            ? "CAC registered"
-                            : "Sole proprietor",
-                        ],
-                        [
-                          "Webhook URL",
-                          dashboardSettings.company?.webhookUrl || "Not configured",
-                        ],
-                        [
-                          "Whitelist IPs",
-                          dashboardSettings.company?.whitelistIps || "Not configured",
-                        ],
-                        [
-                          "Brand Color",
-                          dashboardSettings.company?.primaryColor || "Not configured",
-                        ],
-                        [
-                          "Company Logo",
-                          dashboardSettings.company?.logoUrl || "Not configured",
-                        ],
-                      ].map(([label, value]) => (
-                        <div
-                          key={label}
-                          className="rounded-2xl bg-slate-50 px-4 py-3 text-left"
-                        >
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            {label}
-                          </span>
-                          <span className="mt-1 flex items-center gap-2 text-sm font-bold text-[#0C0C0C]">
-                            {label === "Brand Color" && value !== "Not configured" && (
-                              <div className="w-4 h-4 rounded-full border border-slate-200 shadow-sm" style={{ backgroundColor: value as string }} />
-                            )}
-                            {label === "Company Logo" && value !== "Not configured" ? (
-                              <img src={value as string} alt="Company Logo" className="h-6 w-auto max-w-[120px] object-contain rounded" />
-                            ) : (
-                              value
-                            )}
-                          </span>
+                {/* Right Content Panel */}
+                <div className="flex-1 min-w-0">
+                  {/* User Details Tab */}
+                  {settingsActiveTab === "user_details" && (
+                    <div className="rounded-[24px] bg-white p-6 md:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)]">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                        User Details
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                        Profile information attached to this Beams business dashboard.
+                      </p>
+                      <div className="mt-6 border-t border-slate-100 pt-6">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Full name</span>
+                            <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.fullName}</span>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email address</span>
+                            <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.email || "Not available"}</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:col-span-2">
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Company Description
-                        </span>
-                        <span className="mt-1 block text-xs font-semibold leading-relaxed text-slate-600">
-                          {dashboardSettings.company?.description || "No description provided."}
-                        </span>
                       </div>
                     </div>
                   )}
-                  </div>
 
-                  {/* Withdrawal Details Container */}
-                  <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                          Withdrawal Details
-                        </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                          Bank account used to receive funds from Beams.
-                        </p>
+                  {/* Company Profile Tab */}
+                  {settingsActiveTab === "company_profile" && (
+                    <div className="rounded-[24px] bg-white p-6 md:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)]">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                            Company Profile
+                          </h3>
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            Business details and settings for your company.
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          {dashboardSettings.company && !isEditingCompany && (
+                            <button
+                              onClick={startEditingCompany}
+                              className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
+                            >
+                              Edit Company
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-2">
-                        {dashboardSettings.company && !isEditingWithdrawal && (
-                          <button
-                            onClick={startEditingWithdrawal}
-                            className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
-                          >
-                            Edit Details
-                          </button>
+
+                      <div className="mt-6 border-t border-slate-100 pt-6">
+                        {isEditingCompany ? (
+                          <form onSubmit={handleSaveCompany} className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Company Name
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={editBusinessName}
+                                onChange={(e) => setEditBusinessName(e.target.value)}
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Company Description
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="Describe your company services or product offerings..."
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition resize-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Webhook URL
+                              </label>
+                              <input
+                                type="url"
+                                value={editWebhookUrl}
+                                onChange={(e) => setEditWebhookUrl(e.target.value)}
+                                placeholder="https://yourdomain.com/webhook"
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Whitelist IP Addresses
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={editWhitelistIps}
+                                onChange={(e) => setEditWhitelistIps(e.target.value)}
+                                placeholder="192.168.1.1, 10.0.0.1"
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition resize-none"
+                              />
+                              <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
+                                Comma-separated IPs allowed for API access.
+                              </p>
+                            </div>
+                            {companySaveError && (
+                              <p className="text-xs font-bold text-rose-500">{companySaveError}</p>
+                            )}
+                            {companySaveSuccess && (
+                              <p className="text-xs font-bold text-emerald-600">{companySaveSuccess}</p>
+                            )}
+                            <div className="flex gap-3 pt-2">
+                              <button
+                                type="submit"
+                                disabled={isSavingCompany}
+                                className="flex-1 py-3 rounded-xl bg-[#0C0C0C] text-[10px] font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"
+                              >
+                                {isSavingCompany ? "Saving..." : "Save Changes"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingCompany(false)}
+                                disabled={isSavingCompany}
+                                className="flex-1 py-3 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {[
+                              ["Business name", dashboardSettings.company?.businessName || "Not configured"],
+                              ["Business sector", dashboardSettings.company?.sector || "Not configured"],
+                              ["Website domain", dashboardSettings.company?.domain || "Not configured"],
+                              ["Registration", dashboardSettings.company?.isRegistered ? "CAC registered" : "Sole proprietor"],
+                              ["Webhook URL", dashboardSettings.company?.webhookUrl || "Not configured"],
+                              ["Whitelist IPs", dashboardSettings.company?.whitelistIps || "Not configured"],
+                              ["Brand Color", dashboardSettings.company?.primaryColor || "Not configured"],
+                              ["Company Logo", dashboardSettings.company?.logoUrl || "Not configured"],
+                            ].map(([label, value]) => (
+                              <div key={label} className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+                                <span className="mt-1 flex items-center gap-2 text-sm font-bold text-[#0C0C0C]">
+                                  {label === "Brand Color" && value !== "Not configured" && (
+                                    <div className="w-4 h-4 rounded-full border border-slate-200 shadow-sm" style={{ backgroundColor: value as string }} />
+                                  )}
+                                  {label === "Company Logo" && value !== "Not configured" ? (
+                                    <img src={value as string} alt="Company Logo" className="h-6 w-auto max-w-[120px] object-contain rounded" />
+                                  ) : (
+                                    value
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:col-span-2">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Company Description</span>
+                              <span className="mt-1 block text-xs font-semibold leading-relaxed text-slate-600">
+                                {dashboardSettings.company?.description || "No description provided."}
+                              </span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
+                  )}
 
-                    {isEditingWithdrawal ? (
-                      <form onSubmit={handleSaveCompany} className="mt-6 space-y-4">
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                              Bank Name
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                value={bankSearchTerm}
-                                onFocus={() => setShowBankDropdown(true)}
-                                onChange={(e) => {
-                                  setBankSearchTerm(e.target.value);
-                                  setShowBankDropdown(true);
-                                  if (e.target.value !== editWithdrawalBankName) {
-                                    setEditWithdrawalBankCode("");
-                                    setEditWithdrawalBankName("");
-                                  }
-                                }}
-                                placeholder="Search for your bank..."
-                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition capitalize"
-                              />
-                              {showBankDropdown && (
-                                <>
-                                  <div 
-                                    className="fixed inset-0 z-10" 
-                                    onClick={() => setShowBankDropdown(false)} 
-                                  />
-                                  <div className="absolute z-20 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto">
-                                    {filteredBanks.map((bank: any) => (
+                  {/* Withdrawal Details Tab */}
+                  {settingsActiveTab === "withdrawal_details" && (
+                    <div className="rounded-[24px] bg-white p-6 md:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)]">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                            Withdrawal Details
+                          </h3>
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            Bank account used to receive funds from Beams.
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          {dashboardSettings.company && !isEditingWithdrawal && (
+                            <button
+                              onClick={startEditingWithdrawal}
+                              className="rounded-xl bg-[#0C0C0C] px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-[#1C1C1C] transition cursor-pointer"
+                            >
+                              Edit Details
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-6 border-t border-slate-100 pt-6">
+                        {isEditingWithdrawal ? (
+                          <form onSubmit={handleSaveCompany} className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Bank Name
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={bankSearchTerm}
+                                  onFocus={() => setShowBankDropdown(true)}
+                                  onChange={(e) => {
+                                    setBankSearchTerm(e.target.value);
+                                    setShowBankDropdown(true);
+                                    if (e.target.value !== editWithdrawalBankName) {
+                                      setEditWithdrawalBankCode("");
+                                      setEditWithdrawalBankName("");
+                                    }
+                                  }}
+                                  placeholder="Search for your bank..."
+                                  className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition capitalize"
+                                />
+                                {showBankDropdown && (
+                                  <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowBankDropdown(false)} />
+                                    <div className="absolute z-20 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto">
+                                      {filteredBanks.map((bank: any) => (
                                         <div
                                           key={bank.bankCode}
                                           className="px-4 py-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-[#0C0C0C] cursor-pointer capitalize transition border-b border-slate-50 last:border-0"
@@ -5907,513 +5897,422 @@ function DashboardPage({
                                           No matching banks found.
                                         </div>
                                       )}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                              Account Number
-                            </label>
-                            <input
-                              type="text"
-                              value={editWithdrawalAccountNumber}
-                              onChange={(e) => setEditWithdrawalAccountNumber(e.target.value)}
-                              placeholder="10-digit account number"
-                              maxLength={10}
-                              className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
-                            />
-                          </div>
-                          <div>
-                            <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                              <span>Account Name</span>
-                              {isNameEnquiryLoading && <span className="text-emerald-500 animate-pulse">Verifying...</span>}
-                              {nameEnquiryError && <span className="text-rose-500">{nameEnquiryError}</span>}
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                value={editWithdrawalAccountName}
-                                onChange={(e) => setEditWithdrawalAccountName(e.target.value)}
-                                placeholder={isNameEnquiryLoading ? "Fetching account name..." : "Account name will appear here"}
-                                readOnly
-                                className={`w-full rounded-xl bg-slate-50 pl-4 pr-10 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition cursor-not-allowed ${isNameEnquiryLoading ? 'opacity-50' : 'opacity-80'}`}
-                              />
-                              {!isNameEnquiryLoading && !nameEnquiryError && editWithdrawalAccountName && (
-                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                                  <svg className="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
-                                    <title>Account Verified</title>
-                                    <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {companySaveError && (
-                          <p className="text-xs font-bold text-rose-500 mt-4">
-                            {companySaveError}
-                          </p>
-                        )}
-
-                        {companySaveSuccess && (
-                          <p className="text-xs font-bold text-emerald-600 mt-4">
-                            {companySaveSuccess}
-                          </p>
-                        )}
-
-                        <div className="flex gap-3 pt-2">
-                          <button
-                            type="submit"
-                            disabled={isSavingCompany}
-                            className="flex-1 py-3 rounded-xl bg-[#0C0C0C] text-[10px] font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"
-                          >
-                            {isSavingCompany ? "Saving..." : "Save Details"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingWithdrawal(false)}
-                            disabled={isSavingCompany}
-                            className="flex-1 py-3 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    ) : (
-                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Bank Name</span>
-                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C] capitalize">{dashboardSettings.company?.withdrawalBankName || "Not configured"}</span>
-                        </div>
-                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Number</span>
-                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountNumber || "Not configured"}</span>
-                        </div>
-                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:col-span-2">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Name</span>
-                          <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountName || "Not configured"}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Passcode Modal for Settings Save */}
-                  {showCompanySavePinModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-                      <div className="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl relative overflow-hidden">
-                        <button
-                          onClick={() => setShowCompanySavePinModal(false)}
-                          className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition"
-                        >
-                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                        
-                        <h3 className="text-xl font-black text-[#0C0C0C] mb-2">Verify Changes</h3>
-                        <p className="text-sm text-slate-500 mb-6">Enter your 4-digit transaction PIN to save these details.</p>
-
-                        {companySaveError && (
-                          <div className="mb-6 p-4 rounded-xl bg-rose-50 text-rose-600 text-sm font-medium border border-rose-100">
-                            {companySaveError}
-                          </div>
-                        )}
-
-                        <form onSubmit={confirmSaveCompany} className="space-y-6">
-                          <div>
-                            <input
-                              type="password"
-                              value={companySavePin}
-                              onChange={(e) => setCompanySavePin(e.target.value.replace(/\D/g, ''))}
-                              className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-slate-300 focus:bg-white transition-all outline-none font-black tracking-[0.3em] text-center text-lg placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400"
-                              placeholder="••••"
-                              maxLength={4}
-                              required
-                              autoFocus
-                            />
-                          </div>
-
-                          <button
-                            type="submit"
-                            disabled={isSavingCompany || companySavePin.length !== 4}
-                            className="w-full py-4 rounded-full bg-[#0C0C0C] text-sm font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
-                          >
-                            {isSavingCompany ? "Verifying..." : "Confirm Save"}
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                        Custom Account Number
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                        Customers pay into this account from your website. Beams
-                        records each payment and deducts 1.5%.
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
-                        dashboardSettings.virtualAccount
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-slate-50 text-slate-500"
-                      }`}
-                    >
-                      {dashboardSettings.virtualAccount
-                        ? dashboardSettings.virtualAccount.status
-                        : "Inactive"}
-                    </span>
-                  </div>
-
-                  <div className="mt-6 space-y-4">
-                    {dashboardSettings.virtualAccount ? (
-                      <>
-                        <div className="rounded-3xl bg-[#0C0C0C] p-5 text-left text-[#D7E2EA] shadow-[0_20px_60px_rgba(6,17,60,0.16)]">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-[#D7E2EA]/55">
-                            Account number
-                          </span>
-                          <span className="mt-2 block text-3xl font-black tracking-tight select-all">
-                            {dashboardSettings.virtualAccount.accountNumber}
-                          </span>
-                          <div className="mt-5 grid gap-3 text-xs sm:grid-cols-2">
-                            <div>
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-[#D7E2EA]/45">
-                                Bank
-                              </span>
-                              <span className="mt-1 block font-bold">
-                                {dashboardSettings.virtualAccount.bankName}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-[#D7E2EA]/45">
-                                Account name
-                              </span>
-                              <span className="mt-1 block font-bold">
-                                {dashboardSettings.virtualAccount.accountName}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-medium leading-relaxed text-slate-500">
-                          This is your permanent virtual account. Customers pay
-                          into this account and funds are processed
-                          automatically.
-                        </div>
-                      </>
-                    ) : (
-                      <div className="rounded-3xl bg-slate-50 p-6 text-left border border-dashed border-slate-200">
-                        {accountStep === "form" && (
-                          <>
-                            <div className="text-center mb-5">
-                              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl mb-3">
-                                🏦
-                              </div>
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0C0C0C]">
-                                Generate Virtual Account
-                              </h4>
-                              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed max-w-xs mx-auto">
-                                Verify your identity with your BVN to create a
-                                permanent virtual account for receiving business
-                                payments.
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                                  BVN (Bank Verification Number)
-                                </label>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  maxLength={11}
-                                  value={bvnInput}
-                                  onChange={(e) => {
-                                    setBvnInput(
-                                      e.target.value.replace(/\D/g, "")
-                                    );
-                                    setAccountError("");
-                                  }}
-                                  placeholder="Enter 11-digit BVN"
-                                  className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
-                                />
-                              </div>
-
-                              {dashboardSettings?.company?.isRegistered && (
-                                <div>
-                                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
-                                    Company Registration Number (RC/BN)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={rcNumberInput}
-                                    onChange={(e) =>
-                                      setRcNumberInput(e.target.value)
-                                    }
-                                    className="w-full rounded-xl bg-[#0C0C0C] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
-                                    placeholder="Enter RC or BN Number"
-                                  />
-                                </div>
-                              )}
-
-                              <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                                  Phone Number
-                                </label>
-                                <input
-                                  type="tel"
-                                  value={phoneInput}
-                                  onChange={(e) => {
-                                    setPhoneInput(e.target.value);
-                                    setAccountError("");
-                                  }}
-                                  placeholder="08012345678"
-                                  className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
-                                />
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </div>
-
-                            {accountError && (
-                              <p className="mt-3 text-xs font-bold text-rose-500">
-                                {accountError}
-                              </p>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={handleVerifyBvn}
-                              disabled={accountLoading}
-                              className="mt-5 w-full py-3.5 rounded-xl bg-[#0C0C0C] text-xs font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition duration-200 disabled:bg-slate-200 disabled:text-slate-400"
-                            >
-                              {accountLoading
-                                ? "Verifying BVN..."
-                                : "Verify BVN"}
-                            </button>
-                          </>
-                        )}
-
-                        {accountStep === "otp" && (
-                          <>
-                            <div className="text-center mb-5">
-                              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-xl mb-3">
-                                ✅
-                              </div>
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0C0C0C]">
-                                BVN Verified
-                              </h4>
-                              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed max-w-xs mx-auto">
-                                An OTP has been sent to your registered phone
-                                number. Enter it below to create your virtual
-                                account.
-                              </p>
-                            </div>
-
                             <div>
                               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                                OTP Code
+                                Account Number
                               </label>
                               <input
                                 type="text"
-                                inputMode="numeric"
-                                maxLength={6}
-                                value={accountOtp}
-                                onChange={(e) => {
-                                  setAccountOtp(
-                                    e.target.value.replace(/\D/g, "")
-                                  );
-                                  setAccountError("");
-                                }}
-                                placeholder="Enter OTP"
-                                className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition text-center tracking-[0.4em]"
+                                value={editWithdrawalAccountNumber}
+                                onChange={(e) => setEditWithdrawalAccountNumber(e.target.value)}
+                                placeholder="10-digit account number"
+                                maxLength={10}
+                                className="w-full rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition"
                               />
                             </div>
-
-                            {accountError && (
-                              <p className="mt-3 text-xs font-bold text-rose-500">
-                                {accountError}
-                              </p>
+                            <div>
+                              <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                <span>Account Name</span>
+                                {isNameEnquiryLoading && <span className="text-emerald-500 animate-pulse">Verifying...</span>}
+                                {nameEnquiryError && <span className="text-rose-500">{nameEnquiryError}</span>}
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={editWithdrawalAccountName}
+                                  onChange={(e) => setEditWithdrawalAccountName(e.target.value)}
+                                  placeholder={isNameEnquiryLoading ? "Fetching account name..." : "Account name will appear here"}
+                                  readOnly
+                                  className={`w-full rounded-xl bg-slate-50 pl-4 pr-10 py-3 text-xs font-semibold text-[#0C0C0C] outline-none ring-1 ring-slate-200 focus:bg-white focus:ring-[#0C0C0C] transition cursor-not-allowed ${isNameEnquiryLoading ? 'opacity-50' : 'opacity-80'}`}
+                                />
+                                {!isNameEnquiryLoading && !nameEnquiryError && editWithdrawalAccountName && (
+                                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                    <svg className="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
+                                      <title>Account Verified</title>
+                                      <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {companySaveError && (
+                              <p className="text-xs font-bold text-rose-500 mt-4">{companySaveError}</p>
                             )}
-
-                            <button
-                              type="button"
-                              onClick={handleCreateSubaccount}
-                              disabled={accountLoading}
-                              className="mt-5 w-full py-3.5 rounded-xl bg-[#0C0C0C] text-xs font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition duration-200 disabled:bg-slate-200 disabled:text-slate-400"
-                            >
-                              {accountLoading
-                                ? "Creating Account..."
-                                : "Create Virtual Account"}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAccountStep("form");
-                                setAccountError("");
-                                setAccountOtp("");
-                              }}
-                              className="mt-2 w-full text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#0C0C0C] transition"
-                            >
-                              Back
-                            </button>
-                          </>
+                            {companySaveSuccess && (
+                              <p className="text-xs font-bold text-emerald-600 mt-4">{companySaveSuccess}</p>
+                            )}
+                            <div className="flex gap-3 pt-2">
+                              <button
+                                type="submit"
+                                disabled={isSavingCompany}
+                                className="flex-1 py-3 rounded-xl bg-[#0C0C0C] text-[10px] font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"
+                              >
+                                {isSavingCompany ? "Saving..." : "Save Details"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingWithdrawal(false)}
+                                disabled={isSavingCompany}
+                                className="flex-1 py-3 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Bank Name</span>
+                              <span className="mt-1 block text-sm font-bold text-[#0C0C0C] capitalize">{dashboardSettings.company?.withdrawalBankName || "Not configured"}</span>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Number</span>
+                              <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountNumber || "Not configured"}</span>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:col-span-2">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Name</span>
+                              <span className="mt-1 block text-sm font-bold text-[#0C0C0C]">{dashboardSettings.company?.withdrawalAccountName || "Not configured"}</span>
+                            </div>
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_26px_58px_rgba(0,0,0,0.06)] transition duration-300 ease-in-out">
-                <div className="max-w-2xl">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
-                    Passcode Update
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                    Update the 4-digit passcode used to access and authorize
-                    sensitive dashboard actions.
-                  </p>
-                  {settingsPasscodeSuccess && !showSettingsPasscodeForm && (
-                    <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600 max-w-sm">
-                      {settingsPasscodeSuccess}
-                    </p>
+                    </div>
                   )}
 
-                  {!showSettingsPasscodeForm ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowSettingsPasscodeForm(true);
-                        setSettingsPasscodeSuccess("");
-                        setSettingsPasscodeError("");
-                      }}
-                      className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#0C0C0C] px-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#D7E2EA] transition hover:bg-[#1C1C1C] sm:w-auto"
-                    >
-                      Change Passcode
-                    </button>
-                  ) : (
-                    <form
-                      onSubmit={handleSettingsPasscodeUpdate}
-                      className="mt-6 grid gap-4 sm:grid-cols-3"
-                    >
-                      {dashboardSettings.transactionPinStatus === "set" && (
+                  {/* Virtual Account Tab */}
+                  {settingsActiveTab === "virtual_account" && (
+                    <div className="rounded-[24px] bg-white p-6 md:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)]">
+                      <div className="flex items-start justify-between gap-4">
                         <div>
-                          <label
-                            htmlFor="current-passcode"
-                            className="block text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                          >
-                            Current passcode
-                          </label>
-                          <input
-                            id="current-passcode"
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={4}
-                            value={settingsCurrentPasscode}
-                            onChange={(e) =>
-                              setSettingsCurrentPasscode(
-                                e.target.value.replace(/\D/g, "")
-                              )
-                            }
-                            className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
-                            placeholder="••••"
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <label
-                          htmlFor="new-passcode"
-                          className="block text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                        >
-                          New passcode
-                        </label>
-                        <input
-                          id="new-passcode"
-                          type="password"
-                          inputMode="numeric"
-                          maxLength={4}
-                          value={settingsNewPasscode}
-                          onChange={(e) =>
-                            setSettingsNewPasscode(
-                              e.target.value.replace(/\D/g, "")
-                            )
-                          }
-                          className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
-                          placeholder="••••"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="confirm-passcode"
-                          className="block text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                        >
-                          Confirm passcode
-                        </label>
-                        <input
-                          id="confirm-passcode"
-                          type="password"
-                          inputMode="numeric"
-                          maxLength={4}
-                          value={settingsConfirmPasscode}
-                          onChange={(e) =>
-                            setSettingsConfirmPasscode(
-                              e.target.value.replace(/\D/g, "")
-                            )
-                          }
-                          className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
-                          placeholder="••••"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        {settingsPasscodeError && (
-                          <p className="mb-3 rounded-2xl bg-rose-50 px-4 py-3 text-xs font-bold text-rose-600">
-                            {settingsPasscodeError}
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                            Custom Account Number
+                          </h3>
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            Customers pay into this account from your website. Beams records each payment and deducts 1.5%.
                           </p>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
+                          dashboardSettings.virtualAccount
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-slate-50 text-slate-500"
+                        }`}>
+                          {dashboardSettings.virtualAccount ? dashboardSettings.virtualAccount.status : "Inactive"}
+                        </span>
+                      </div>
+
+                      <div className="mt-6 border-t border-slate-100 pt-6 space-y-4">
+                        {dashboardSettings.virtualAccount ? (
+                          <>
+                            <div className="rounded-3xl bg-[#0C0C0C] p-5 text-left text-[#D7E2EA] shadow-[0_20px_60px_rgba(6,17,60,0.16)]">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-[#D7E2EA]/55">
+                                Account number
+                              </span>
+                              <span className="mt-2 block text-3xl font-black tracking-tight select-all">
+                                {dashboardSettings.virtualAccount.accountNumber}
+                              </span>
+                              <div className="mt-5 grid gap-3 text-xs sm:grid-cols-2">
+                                <div>
+                                  <span className="block text-[9px] font-bold uppercase tracking-wider text-[#D7E2EA]/45">Bank</span>
+                                  <span className="mt-1 block font-bold">{dashboardSettings.virtualAccount.bankName}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-bold uppercase tracking-wider text-[#D7E2EA]/45">Account name</span>
+                                  <span className="mt-1 block font-bold">{dashboardSettings.virtualAccount.accountName}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-medium leading-relaxed text-slate-500">
+                              This is your permanent virtual account. Customers pay into this account and funds are processed automatically.
+                            </div>
+                          </>
+                        ) : (
+                          <div className="rounded-3xl bg-slate-50 p-6 text-left border border-dashed border-slate-200">
+                            {accountStep === "form" && (
+                              <>
+                                <div className="text-center mb-5">
+                                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl mb-3">🏦</div>
+                                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0C0C0C]">Generate Virtual Account</h4>
+                                  <p className="mt-1 text-[11px] text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                    Verify your identity with your BVN to create a permanent virtual account for receiving business payments.
+                                  </p>
+                                </div>
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                      BVN (Bank Verification Number)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      maxLength={11}
+                                      value={bvnInput}
+                                      onChange={(e) => {
+                                        setBvnInput(e.target.value.replace(/D/g, ""));
+                                        setAccountError("");
+                                      }}
+                                      placeholder="Enter 11-digit BVN"
+                                      className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
+                                    />
+                                  </div>
+                                  {dashboardSettings?.company?.isRegistered && (
+                                    <div>
+                                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        Company Registration Number (RC/BN)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={rcNumberInput}
+                                        onChange={(e) => setRcNumberInput(e.target.value)}
+                                        className="w-full rounded-xl bg-[#0C0C0C] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                                        placeholder="Enter RC or BN Number"
+                                      />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                      Phone Number
+                                    </label>
+                                    <input
+                                      type="tel"
+                                      value={phoneInput}
+                                      onChange={(e) => {
+                                        setPhoneInput(e.target.value);
+                                        setAccountError("");
+                                      }}
+                                      placeholder="08012345678"
+                                      className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition"
+                                    />
+                                  </div>
+                                </div>
+                                {accountError && (
+                                  <p className="mt-3 text-xs font-bold text-rose-500">{accountError}</p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={handleVerifyBvn}
+                                  disabled={accountLoading}
+                                  className="mt-5 w-full py-3.5 rounded-xl bg-[#0C0C0C] text-xs font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition duration-200 disabled:bg-slate-200 disabled:text-slate-400"
+                                >
+                                  {accountLoading ? "Verifying BVN..." : "Verify BVN"}
+                                </button>
+                              </>
+                            )}
+                            {accountStep === "otp" && (
+                              <>
+                                <div className="text-center mb-5">
+                                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-xl mb-3">✅</div>
+                                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0C0C0C]">BVN Verified</h4>
+                                  <p className="mt-1 text-[11px] text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                    An OTP has been sent to your registered phone number. Enter it below to create your virtual account.
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">OTP Code</label>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    value={accountOtp}
+                                    onChange={(e) => {
+                                      setAccountOtp(e.target.value.replace(/D/g, ""));
+                                      setAccountError("");
+                                    }}
+                                    placeholder="Enter OTP"
+                                    className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#0C0C0C] placeholder-slate-300 outline-none ring-1 ring-slate-200 focus:ring-[#0C0C0C] transition text-center tracking-[0.4em]"
+                                  />
+                                </div>
+                                {accountError && (
+                                  <p className="mt-3 text-xs font-bold text-rose-500">{accountError}</p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={handleCreateSubaccount}
+                                  disabled={accountLoading}
+                                  className="mt-5 w-full py-3.5 rounded-xl bg-[#0C0C0C] text-xs font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition duration-200 disabled:bg-slate-200 disabled:text-slate-400"
+                                >
+                                  {accountLoading ? "Creating Account..." : "Create Virtual Account"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAccountStep("form");
+                                    setAccountError("");
+                                    setAccountOtp("");
+                                  }}
+                                  className="mt-2 w-full text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#0C0C0C] transition"
+                                >
+                                  Back
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
-                        {settingsPasscodeSuccess && (
-                          <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600">
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Passcode Update Tab */}
+                  {settingsActiveTab === "passcode_update" && (
+                    <div className="rounded-[24px] bg-white p-6 md:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)]">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#0C0C0C]">
+                        Passcode Update
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                        Update the 4-digit passcode used to access and authorize sensitive dashboard actions.
+                      </p>
+                      <div className="mt-6 border-t border-slate-100 pt-6 max-w-lg">
+                        {settingsPasscodeSuccess && !showSettingsPasscodeForm && (
+                          <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600">
                             {settingsPasscodeSuccess}
                           </p>
                         )}
-                        <div className="flex flex-wrap gap-3">
-                          <button
-                            type="submit"
-                            disabled={isUpdatingPasscode}
-                            className="inline-flex w-full items-center justify-center rounded-full bg-[#0C0C0C] px-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#D7E2EA] transition hover:bg-[#1C1C1C] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
-                          >
-                            {isUpdatingPasscode ? "Updating..." : "Update passcode"}
-                          </button>
+                        {!showSettingsPasscodeForm ? (
                           <button
                             type="button"
                             onClick={() => {
-                              setShowSettingsPasscodeForm(false);
-                              setSettingsCurrentPasscode("");
-                              setSettingsNewPasscode("");
-                              setSettingsConfirmPasscode("");
+                              setShowSettingsPasscodeForm(true);
+                              setSettingsPasscodeSuccess("");
                               setSettingsPasscodeError("");
                             }}
-                            className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:bg-slate-50 sm:w-auto"
+                            className="inline-flex items-center justify-center rounded-full bg-[#0C0C0C] px-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#D7E2EA] transition hover:bg-[#1C1C1C]"
                           >
-                            Cancel
+                            Change Passcode
                           </button>
-                        </div>
+                        ) : (
+                          <form onSubmit={handleSettingsPasscodeUpdate} className="grid gap-4 sm:grid-cols-3">
+                            {dashboardSettings.transactionPinStatus === "set" && (
+                              <div>
+                                <label htmlFor="current-passcode" className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                  Current passcode
+                                </label>
+                                <input
+                                  id="current-passcode"
+                                  type="password"
+                                  inputMode="numeric"
+                                  maxLength={4}
+                                  value={settingsCurrentPasscode}
+                                  onChange={(e) => setSettingsCurrentPasscode(e.target.value.replace(/D/g, ""))}
+                                  className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
+                                  placeholder="••••"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <label htmlFor="new-passcode" className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                New passcode
+                              </label>
+                              <input
+                                id="new-passcode"
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={settingsNewPasscode}
+                                onChange={(e) => setSettingsNewPasscode(e.target.value.replace(/D/g, ""))}
+                                className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
+                                placeholder="••••"
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="confirm-passcode" className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                Confirm passcode
+                              </label>
+                              <input
+                                id="confirm-passcode"
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={settingsConfirmPasscode}
+                                onChange={(e) => setSettingsConfirmPasscode(e.target.value.replace(/D/g, ""))}
+                                className="mt-2 w-full rounded-2xl bg-slate-50 px-4 py-3 text-center text-xl font-black tracking-widest text-[#0C0C0C] transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-800/60"
+                                placeholder="••••"
+                              />
+                            </div>
+                            <div className="sm:col-span-3">
+                              {settingsPasscodeError && (
+                                <p className="mb-3 rounded-2xl bg-rose-50 px-4 py-3 text-xs font-bold text-rose-600">{settingsPasscodeError}</p>
+                              )}
+                              {settingsPasscodeSuccess && (
+                                <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600">{settingsPasscodeSuccess}</p>
+                              )}
+                              <div className="flex flex-wrap gap-3">
+                                <button
+                                  type="submit"
+                                  disabled={isUpdatingPasscode}
+                                  className="inline-flex w-full items-center justify-center rounded-full bg-[#0C0C0C] px-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#D7E2EA] transition hover:bg-[#1C1C1C] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
+                                >
+                                  {isUpdatingPasscode ? "Updating..." : "Update passcode"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowSettingsPasscodeForm(false);
+                                    setSettingsCurrentPasscode("");
+                                    setSettingsNewPasscode("");
+                                    setSettingsConfirmPasscode("");
+                                    setSettingsPasscodeError("");
+                                  }}
+                                  className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:bg-slate-50 sm:w-auto"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </form>
+                        )}
                       </div>
-                    </form>
+                    </div>
                   )}
                 </div>
               </div>
+
+              {/* Passcode Modal for Settings Save */}
+              {showCompanySavePinModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+                  <div className="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl relative overflow-hidden">
+                    <button
+                      onClick={() => setShowCompanySavePinModal(false)}
+                      className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition"
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <h3 className="text-xl font-black text-[#0C0C0C] mb-2">Verify Changes</h3>
+                    <p className="text-sm text-slate-500 mb-6">Enter your 4-digit transaction PIN to save these details.</p>
+                    {companySaveError && (
+                      <div className="mb-6 p-4 rounded-xl bg-rose-50 text-rose-600 text-sm font-medium border border-rose-100">
+                        {companySaveError}
+                      </div>
+                    )}
+                    <form onSubmit={confirmSaveCompany} className="space-y-6">
+                      <div>
+                        <input
+                          type="password"
+                          value={companySavePin}
+                          onChange={(e) => setCompanySavePin(e.target.value.replace(/D/g, ''))}
+                          className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-slate-300 focus:bg-white transition-all outline-none font-black tracking-[0.3em] text-center text-lg placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400"
+                          placeholder="••••"
+                          maxLength={4}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isSavingCompany || companySavePin.length !== 4}
+                        className="w-full py-4 rounded-full bg-[#0C0C0C] text-sm font-black uppercase tracking-widest text-[#D7E2EA] hover:bg-[#1C1C1C] transition flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      >
+                        {isSavingCompany ? "Verifying..." : "Confirm Save"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
