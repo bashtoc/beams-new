@@ -3114,9 +3114,10 @@ function LoginPage({
   );
   const [otpCode, setOtpCode] = useState("");
   const [passcode, setPasscode] = useState("");
-  const [loginStep, setLoginStep] = useState<"email" | "otp" | "passcode">(
-    "email"
-  );
+  const [confirmPasscode, setConfirmPasscode] = useState("");
+  const [loginStep, setLoginStep] = useState<
+    "email" | "otp" | "passcode" | "reset_passcode"
+  >("email");
   const [passcodeMode, setPasscodeMode] = useState<"set" | "enter">("enter");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -3243,11 +3244,51 @@ function LoginPage({
     }
   };
 
+  const handleResetPasscodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{4}$/.test(passcode)) {
+      setLoginError("Passcode must be exactly 4 digits.");
+      return;
+    }
+    if (passcode !== confirmPasscode) {
+      setLoginError("Passcodes do not match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setLoginError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/passcode/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, pin: passcode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("beams_auth_token", data.token);
+        setIsSubmitting(false);
+        setSuccess(true);
+        setTimeout(() => {
+          onNavigate("dashboard");
+        }, 900);
+      } else {
+        setIsSubmitting(false);
+        setLoginError(data.message || "Passcode reset failed.");
+      }
+    } catch (err) {
+      console.warn("Passcode reset failed.", err);
+      setIsSubmitting(false);
+      setLoginError("Unable to reset passcode right now. Please try again.");
+    }
+  };
+
   const formTitle =
     loginStep === "email"
       ? "Enter Email"
       : loginStep === "otp"
       ? "Verify Email"
+      : loginStep === "reset_passcode"
+      ? "Reset Passcode"
       : passcodeMode === "set"
       ? "Set Passcode"
       : "Enter Passcode";
@@ -3256,6 +3297,8 @@ function LoginPage({
       ? "Enter your business email and we will send a secure one-time code."
       : loginStep === "otp"
       ? `We sent a 6-digit code to ${maskEmail(email)}.`
+      : loginStep === "reset_passcode"
+      ? "Create a new 4-digit passcode for dashboard access. Withdrawals will be frozen for 24h."
       : passcodeMode === "set"
       ? "Create a 4-digit passcode for future dashboard access."
       : "Enter your 4-digit passcode to open your dashboard.";
@@ -3315,6 +3358,8 @@ function LoginPage({
                   ? handleEmailSubmit
                   : loginStep === "otp"
                   ? handleOtpSubmit
+                  : loginStep === "reset_passcode"
+                  ? handleResetPasscodeSubmit
                   : handlePasscodeSubmit
               }
             >
@@ -3408,6 +3453,73 @@ function LoginPage({
                     className="mt-2 w-full rounded-2xl bg-white px-4 py-3.5 text-center text-2xl font-black tracking-widest text-[#0C0C0C] shadow-[0_12px_34px_rgba(6,17,60,0.08)] ring-1 ring-slate-100 transition placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-800/60"
                     placeholder="••••"
                   />
+                  {passcodeMode === "enter" && (
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginError("");
+                          setPasscode("");
+                          setConfirmPasscode("");
+                          setLoginStep("reset_passcode");
+                        }}
+                        className="text-xs font-bold text-slate-500 hover:text-[#0C0C0C] transition"
+                      >
+                        Forgot Passcode?
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {loginStep === "reset_passcode" && (
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="login-reset-passcode"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#0C0C0C]/70 text-center"
+                    >
+                      New 4-Digit Passcode
+                    </label>
+                    <input
+                      id="login-reset-passcode"
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      pattern="[0-9]*"
+                      required
+                      maxLength={4}
+                      value={passcode}
+                      onChange={(e) =>
+                        setPasscode(e.target.value.replace(/\D/g, ""))
+                      }
+                      className="mt-2 w-full rounded-2xl bg-white px-4 py-3.5 text-center text-2xl font-black tracking-widest text-[#0C0C0C] shadow-[0_12px_34px_rgba(6,17,60,0.08)] ring-1 ring-slate-100 transition placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-800/60"
+                      placeholder="••••"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="login-confirm-passcode"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#0C0C0C]/70 text-center"
+                    >
+                      Confirm Passcode
+                    </label>
+                    <input
+                      id="login-confirm-passcode"
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      pattern="[0-9]*"
+                      required
+                      maxLength={4}
+                      value={confirmPasscode}
+                      onChange={(e) =>
+                        setConfirmPasscode(e.target.value.replace(/\D/g, ""))
+                      }
+                      className="mt-2 w-full rounded-2xl bg-white px-4 py-3.5 text-center text-2xl font-black tracking-widest text-[#0C0C0C] shadow-[0_12px_34px_rgba(6,17,60,0.08)] ring-1 ring-slate-100 transition placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-800/60"
+                      placeholder="••••"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -3422,6 +3534,8 @@ function LoginPage({
                   ? "Send Code"
                   : loginStep === "otp"
                   ? "Verify Email"
+                  : loginStep === "reset_passcode"
+                  ? "Reset & Enter"
                   : passcodeMode === "set"
                   ? "Set Passcode"
                   : "Enter Dashboard"}
@@ -3433,8 +3547,13 @@ function LoginPage({
                   onClick={() => {
                     setLoginError("");
                     setPasscode("");
+                    setConfirmPasscode("");
                     setOtpCode("");
-                    setLoginStep(loginStep === "passcode" ? "otp" : "email");
+                    if (loginStep === "reset_passcode") {
+                      setLoginStep("passcode");
+                    } else {
+                      setLoginStep(loginStep === "passcode" ? "otp" : "email");
+                    }
                   }}
                   className="w-full text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#0C0C0C] transition"
                 >
