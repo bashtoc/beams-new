@@ -66,7 +66,7 @@ const PRODUCTION_API_BASE_URL =
   "https://api.beams.saference.com/api";
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
-  (API_ENV === "local" ? LOCAL_API_BASE_URL : PRODUCTION_API_BASE_URL)
+  (import.meta.env.MODE === "production" ? PRODUCTION_API_BASE_URL : LOCAL_API_BASE_URL)
 ).replace(/\/$/, "");
 const REMEMBERED_LOGIN_EMAIL_KEY = "beams_remembered_login_email";
 const formatDisplayDate = (value?: string | null) =>

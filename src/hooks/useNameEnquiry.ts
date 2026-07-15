@@ -20,12 +20,11 @@ export const useNameEnquiry = (bankCode: string | null | undefined, accountNumbe
       setAccountName('');
       
       try {
-        const API_ENV = import.meta.env.VITE_API_ENV || "production";
         const LOCAL_API_BASE_URL = import.meta.env.VITE_LOCAL_API_BASE_URL || "http://localhost:50001/api";
         const PRODUCTION_API_BASE_URL = import.meta.env.VITE_PRODUCTION_API_BASE_URL || "https://api.beams.saference.com/api";
         const API_BASE_URL = (
           import.meta.env.VITE_API_BASE_URL ||
-          (API_ENV === "local" ? LOCAL_API_BASE_URL : PRODUCTION_API_BASE_URL)
+          (import.meta.env.MODE === "production" ? PRODUCTION_API_BASE_URL : LOCAL_API_BASE_URL)
         ).replace(/\/$/, "");
 
         const token = localStorage.getItem("beams_auth_token");
