@@ -33,6 +33,7 @@ type PricingResponse = {
   setup: PricingItem[];
   hosting: PricingItem[];
   domains: PricingItem[];
+  fees: PricingItem[];
 };
 
 type WebsiteSample = {
@@ -753,6 +754,19 @@ function ProjectCard({
 }
 
 function PricingPage() {
+  const [pricing, setPricing] = useState<PricingResponse | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/pricing`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setPricing(data.pricing);
+        }
+      })
+      .catch(console.warn);
+  }, []);
+
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-center px-6 py-16 md:px-10 md:py-24 bg-white text-[#0C0C0C]">
       {/* Background light glow effects */}
@@ -785,7 +799,11 @@ function PricingPage() {
             </h3>
             <div className="mt-6 flex items-baseline text-[#0C0C0C]">
               <span className="text-3xl font-black">₦</span>
-              <span className="text-6xl font-black tracking-tight">3,000</span>
+              <span className="text-6xl font-black tracking-tight">
+                {pricing?.hosting?.[0]
+                  ? pricing.hosting[0].amount.toLocaleString()
+                  : "3,000"}
+              </span>
               <span className="ml-1 text-xs font-bold uppercase tracking-wider text-slate-400">
                 / month
               </span>
@@ -825,7 +843,9 @@ function PricingPage() {
               Collections
             </h3>
             <div className="mt-6 flex items-baseline text-[#0C0C0C]">
-              <span className="text-6xl font-black tracking-tight">1.5%</span>
+              <span className="text-6xl font-black tracking-tight">
+                {pricing?.fees?.[0] ? pricing.fees[0].amount : "1.5"}%
+              </span>
               <span className="ml-2 text-xs font-bold uppercase tracking-wider text-slate-400">
                 on collections
               </span>
@@ -846,7 +866,7 @@ function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#0C0C0C]"></span>
-                  1.5% transaction cap fee
+                  {pricing?.fees?.[0] ? pricing.fees[0].amount : "1.5"}% transaction cap fee
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#0C0C0C]"></span>
