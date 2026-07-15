@@ -58,7 +58,7 @@ const FALLBACK_WEBSITE_SAMPLES: WebsiteSample[] = [
 ];
 
 const formatNaira = (amount: number) => `₦${amount.toLocaleString()}`;
-const API_ENV = import.meta.env.VITE_API_ENV || "local";
+const API_ENV = import.meta.env.VITE_API_ENV || "production";
 const LOCAL_API_BASE_URL =
   import.meta.env.VITE_LOCAL_API_BASE_URL || "http://localhost:50001/api";
 const PRODUCTION_API_BASE_URL =
